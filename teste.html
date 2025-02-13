@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simulador de Plano de Saúde</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos existentes */
+        :root {
+            --primary-color: #2a4365;
+            --secondary-color: #f7fafc;
+            --accent-color: #4299e1;
+            --text-dark: #2d3748;
+            --text-light: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --background-light: #edf2f7;
+            --card-background: #ffffff;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        header {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px var(--shadow-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: var(--accent-color);
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .calculate-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            width: 100%;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+        }
+
+        .input-panel {
+            width: 250px;
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .input-group h3 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            background: var(--card-background);
+            color: var(--text-dark);
+            font-size: 1em;
+            margin: 5px 0; /* Espaçamento entre os inputs */
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        .results-grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .plan-card {
+            width: 350px;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        button.year-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            transition: var(--transition);
+        }
+
+        button.year-btn:hover {
+            background: darken(var(--accent-color), 10%);
+        }
+
+        .year-result {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid var(--shadow-color);
+            border-radius: var(--border-radius);
+            background: var(--secondary-color);
+        }
+
+        .age-value {
+            margin: 5px 0;
+        }
+
+        .franchise-buttons {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column; /* Alinha os botões em coluna */
+            gap: 5px; /* Espaçamento entre os botões de franquia */
+        }
+
+        .franchise-buttons button {
+            width: 50px; /* Largura igual a 50px */
+            height: 50px; /* Altura igual a 50px */
+            background-color: gray; /* Cor de fundo cinza */
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s; /* Transição suave para a cor */
+        }
+
+        .franchise-buttons button.active {
+            background-color: blue; /* Cor azul quando ativo */
+        }
+
+        .highlight {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Calculando valores...</p>
+        </div>
+    </div>
+
+    <header>
+        <h1>simulador de Plano de Saúde</h1>
+        <div class="controls">
+            <button class="calculate-btn" id="calculateBtn">Calcular Valores</button>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="input-panel">
+            <div class="input-group">
+                <h3>Idades</h3>
+                <input type="number" placeholder="Idade 1" id="age1" min="0" max="90">
+                <input type="number" placeholder="Idade 2" id="age2" min="0" max="90">
+                <input type="number" placeholder="Idade 3" id="age3" min="0" max="90">
+                <input type="number" placeholder="Idade 4" id="age4" min="0" max="90">
+                <input type="number" placeholder="Idade 5" id="age5" min="0" max="90">
+                <input type="number" placeholder="Idade 6" id="age6" min="0" max="90">
+                <input type="number" placeholder="Idade 7" id="age7" min="0" max="90">
+            </div>
+
+            <div class="input-group">
+                <h3>Reajustes/ano (sinistralidade)</h3>
+                <input type="number" placeholder="Reajuste Amil" id="amil-adjustment" step="0.01">
+                <input type="number" placeholder="Reajuste Porto Seguro" id="porto-adjustment" step="0.01">
+                <input type="number" placeholder="Reajuste Vumi" id="vumi-adjustment" step="0.01">
+                <input type="number" placeholder="Reajuste RedBridge" id="redbridge-adjustment" step="0.01">
+                <input type="number" placeholder="Reajuste Bradesco" id="bradesco-adjustment" step="0.01">
+                <input type="number" placeholder="Reajuste Sul América" id="sulamerica-adjustment" step="0.01">
+            </div>
+
+            <div class="input-group">
+                <h3>Conversão (R$ para $)</h3>
+                <input type="number" placeholder="Taxa de Conversão" id="conversion-rate" step="0.01">
+            </div>
+
+            <button class="calculate-btn" id="convertBtn">Converter Vumi e RedBridge para Dólar</button>
+
+            <div class="franchise-buttons">
+                <h3>Selecione a Franquia</h3>
+                <button onclick="setFranchise(2000, this)">2000</button>
+                <button onclick="setFranchise(3000, this)">3000</button>
+                <button onclick="setFranchise(5000, this)">5000</button>
+                <button onclick="setFranchise(10000, this)">10000</button>
+                <button onclick="setFranchise(20000, this)">20000</button>
+            </div>
+        </div>
+
+        <div class="results-grid">
+            <div class="plan-card">
+                <h3><i class="fas fa-hospital plan-icon"></i> Amil</h3>
+                <div id="amil-results"></div>
+            </div>
+
+            <div class="plan-card">
+                <h3><i class="fas fa-shield-alt plan-icon"></i> Porto Seguro</h3>
+                <div id="porto-results"></div>
+            </div>
+
+            <div class="plan-card">
+                <h3><i class="fas fa-globe plan-icon"></i> Vumi</h3>
+                <div id="vumi-results"></div>
+            </div>
+
+            <div class="plan-card">
+                <h3><i class="fas fa-bridge plan-icon"></i> RedBridge</h3>
+                <div id="redbridge-results"></div>
+            </div>
+
+            <div class="plan-card">
+                <h3><i class="fas fa-building plan-icon"></i> Bradesco</h3>
+                <div id="bradesco-results"></div>
+            </div>
+
+            <div class="plan-card">
+                <h3><i class="fas fa-building plan-icon"></i> Sul América</h3>
+                <div id="sulamerica-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const plansData = {
+            porto: [
+                { minAge: 0, maxAge: 18, value: 766.06 },
+                { minAge: 19, maxAge: 23, value: 1024.24 },
+                { minAge: 24, maxAge: 28, value: 1260.79 },
+                { minAge: 29, maxAge: 33, value: 1428.81 },
+                { minAge: 34, maxAge: 38, value: 1548.13 },
+                { minAge: 39, maxAge: 43, value: 1551.79 },
+                { minAge: 44, maxAge: 48, value: 1824.46 },
+                { minAge: 49, maxAge: 53, value: 2056.00 },
+                { minAge: 54, maxAge: 58, value: 2540.34 },
+                { minAge: 59, maxAge: 200, value: 4270.11 }
+            ],
+            amil: [
+                { minAge: 0, maxAge: 18, value: 932.75 },
+                { minAge: 19, maxAge: 23, value: 1091.32 },
+                { minAge: 24, maxAge: 28, value: 1331.41 },
+                { minAge: 29, maxAge: 33, value: 1597.69 },
+                { minAge: 34, maxAge: 38, value: 1677.57 },
+                { minAge: 39, maxAge: 43, value: 1845.33 },
+                { minAge: 44, maxAge: 48, value: 2306.66 },
+                { minAge: 49, maxAge: 53, value: 2537.33 },
+                { minAge: 54, maxAge: 58, value: 3171.66 },
+                { minAge: 59, maxAge: 200, value: 5550.41 }
+            ],
+            vumi: [
+                { minAge: 0, maxAge: 17, value: 513.96 },
+                { minAge: 18, maxAge: 24, value: 1749.58 },
+                { minAge: 25, maxAge: 29, value: 1934.17 },
+                { minAge: 30, maxAge: 34, value: 2075.42 },
+                { minAge: 35, maxAge: 39, value: 2325.00 },
+                { minAge: 40, maxAge: 44, value: 2544.58 },
+                { minAge: 45, maxAge: 49, value: 2845.42 },
+                { minAge: 50, maxAge: 54, value: 3737.08 },
+                { minAge: 55, maxAge: 59, value: 3977.08 },
+                { minAge: 60, maxAge: 200, value: 4249.17 }
+            ],
+            redbridge: [
+                { minAge: 1, maxAge: 17, value: 421.67 },
+                { minAge: 18, maxAge: 18, value: 427.50 },
+                { minAge: 19, maxAge: 19, value: 433.33 },
+                { minAge: 20, maxAge: 20, value: 439.58 },
+                { minAge: 21, maxAge: 21, value: 445.42 },
+                { minAge: 22, maxAge: 22, value: 451.25 },
+                { minAge: 23, maxAge: 23, value: 457.08 },
+                { minAge: 24, maxAge: 29, value: 1604.17 },
+                { minAge: 30, maxAge: 30, value: 1895.83 },
+                { minAge: 40, maxAge: 40, value: 2333.33 },
+                { minAge: 50, maxAge: 50, value: 3375.00 },
+                { minAge: 60, maxAge: 60, value: 3591.67 },
+                { minAge: 61, maxAge: 61, value: 3997.92 },
+                { minAge: 62, maxAge: 62, value: 4515.42 },
+                { minAge: 63, maxAge: 63, value: 5157.50 },
+                { minAge: 64, maxAge: 64, value: 5929.17 },
+                { minAge: 65, maxAge: 65, value: 6820.00 },
+                { minAge: 70, maxAge: 70, value: 11711.25 },
+                { minAge: 74, maxAge: 74, value: 13995.83 }
+            ],
+            sulamerica: [
+                { minAge: 0, maxAge: 18, value: 1091.95 },
+                { minAge: 19, maxAge: 23, value: 1364.93 },
+                { minAge: 24, maxAge: 28, value: 1692.51 },
+                { minAge: 29, maxAge: 33, value: 1878.67 },
+                { minAge: 34, maxAge: 38, value: 2010.18 },
+                { minAge: 39, maxAge: 43, value: 2331.80 },
+                { minAge: 44, maxAge: 48, value: 2787.44 },
+                { minAge: 49, maxAge: 53, value: 3266.88 },
+                { minAge: 54, maxAge: 58, value: 3889.22 },
+                { minAge: 59, maxAge: 200, value: 6551.39 }
+            ],
+            bradesco: [
+                { minAge: 0, maxAge: 18, value: 1538.87 },
+                { minAge: 19, maxAge: 23, value: 1815.87 },
+                { minAge: 24, maxAge: 28, value: 2197.18 },
+                { minAge: 29, maxAge: 33, value: 2636.64 },
+                { minAge: 34, maxAge: 38, value: 3005.74 },
+                { minAge: 39, maxAge: 43, value: 3095.91 },
+                { minAge: 44, maxAge: 48, value: 3769.46 },
+                { minAge: 49, maxAge: 53, value: 4433.64 },
+                { minAge: 54, maxAge: 58, value: 5276.03 },
+                { minAge: 59, maxAge: 200, value: 9232.52 }
+            ]
+        };
+
+        const franchiseValues = {
+            2000: { faixa1: 2000, faixa2: 2500, faixa3: 3000, faixa4: 3500 }, 
+            3000: { faixa1: 3000, faixa2: 3500, faixa3: 4000, faixa4: 4500 },
+            5000: { faixa1: 5000, faixa2: 5500, faixa3: 6000, faixa4: 6500 },
+            10000: { faixa1: 10000, faixa2: 11000, faixa3: 12000, faixa4: 13000 },
+            20000: { faixa1: 20000, faixa2: 21000, faixa3: 22000, faixa4: 23000 },
+        };
+
+        let selectedFranchise = null;
+
+        document.getElementById('calculateBtn').addEventListener('click', () => {
+            document.querySelector('.loading').style.display = 'flex';
+            setTimeout(calculatePlans, 500);
+        });
+
+        document.getElementById('convertBtn').addEventListener('click', () => {
+            convertToDollar();
+        });
+
+        function setFranchise(value, button) {
+            selectedFranchise = value;
+
+            // Remove a classe 'active' de todos os botões
+            const buttons = document.querySelectorAll('.franchise-buttons button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Adiciona a classe 'active' ao botão clicado
+            button.classList.add('active');
+
+            displayFranchiseValues(value);
+            alert(`Franquia selecionada: R$ ${formatCurrency(value)}`);
+        }
+
+        function displayFranchiseValues(franchise) {
+            const resultsDiv = document.getElementById('vumi-results');
+            const redbridgeDiv = document.getElementById('redbridge-results');
+            resultsDiv.innerHTML += `<strong>Valores para franquia ${franchise}:</strong><br>`;
+            redbridgeDiv.innerHTML += `<strong>Valores para franquia ${franchise}:</strong><br>`;
+        }
+
+        function calculatePlans() {
+            const ages = [
+                parseInt(document.getElementById('age1').value) || 0,
+                parseInt(document.getElementById('age2').value) || 0,
+                parseInt(document.getElementById('age3').value) || 0,
+                parseInt(document.getElementById('age4').value) || 0,
+                parseInt(document.getElementById('age5').value) || 0,
+                parseInt(document.getElementById('age6').value) || 0,
+                parseInt(document.getElementById('age7').value) || 0,
+            ].filter(age => age > 0);
+
+            const adjustments = {
+                amil: parseFloat(document.getElementById('amil-adjustment').value) || 0,
+                porto: parseFloat(document.getElementById('porto-adjustment').value) || 0,
+                vumi: parseFloat(document.getElementById('vumi-adjustment').value) || 0,
+                redbridge: parseFloat(document.getElementById('redbridge-adjustment').value) || 0,
+                bradesco: parseFloat(document.getElementById('bradesco-adjustment').value) || 0,
+                sulamerica: parseFloat(document.getElementById('sulamerica-adjustment').value) || 0,
+            };
+
+            if (ages.length === 0) {
+                alert('Por favor, insira pelo menos uma idade.');
+                document.querySelector('.loading').style.display = 'none';
+                return;
+            }
+
+            const results = {
+                amil: [],
+                porto: [],
+                vumi: [],
+                redbridge: [],
+                bradesco: [],
+                sulamerica: []
+            };
+
+            for (let year = 1; year <= 99; year++) { // Limita a contagem até 99 anos
+                const yearlyAges = ages.map(age => Math.min(age + year, 99)); // Garante que não passe de 99 anos
+
+                for (const plan of Object.keys(plansData)) {
+                    const yearlyValues = yearlyAges.map(age => {
+                        const baseValue = getBaseValue(age, plansData[plan]);
+                        const adjustedValue = baseValue * Math.pow(1 + adjustments[plan] / 100, year - 1);
+                        return Math.min(adjustedValue, 99); // Garante que o valor não ultrapasse 99
+                    });
+
+                    const totalValue = yearlyValues.reduce((sum, value) => sum + value, 0);
+
+                    results[plan].push({
+                        year: year,
+                        value: totalValue,
+                        ages: yearlyAges.map(age => {
+                            const baseValue = getBaseValue(age, plansData[plan]);
+                            const adjustedValue = Math.min(baseValue * Math.pow(1 + adjustments[plan] / 100, year - 1), 99);
+                            const nextBaseValue = getBaseValue(age + 1, plansData[plan]);
+                            const percentageChange = nextBaseValue ? ((nextBaseValue - baseValue) / baseValue) * 100 : 0;
+
+                            return {
+                                age: age,
+                                planValue: formatCurrency(adjustedValue),
+                                percentageChange: percentageChange
+                            };
+                        })
+                    });
+                }
+            }
+
+            displayResults(results);
+            window.results = results; 
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function displayResults(results) {
+            for (const plan in results) {
+                const resultDiv = document.getElementById(`${plan}-results`);
+                resultDiv.innerHTML = '';
+
+                results[plan].forEach(result => {
+                    const yearDiv = document.createElement('div');
+                    yearDiv.innerHTML = `<button class="year-btn" onclick="toggleYearDetails('${plan}', ${result.year})">${result.year}</button>
+                        <strong>Valor Total:</strong> ${formatCurrency(result.value)}
+                        <div id="${plan}-details-${result.year}" class="year-result"></div>`;
+                    resultDiv.appendChild(yearDiv);
+                });
+            }
+        }
+
+        function getBaseValue(age, planData) {
+            const plan = planData.find(p => age >= p.minAge && age <= p.maxAge);
+            return plan ? plan.value : 0;
+        }
+
+        function formatCurrency(value) {
+            return `R$ ${value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+        }
+
+        function toggleYearDetails(plan, year) {
+            const detailsDiv = document.getElementById(`${plan}-details-${year}`);
+            const yearResults = results[plan].find(r => r.year === year);
+
+            if (detailsDiv.style.display === 'block') {
+                detailsDiv.style.display = 'none'; // Esconde os detalhes se já estiver visível
+            } else {
+                detailsDiv.style.display = 'block'; // Mostra os detalhes
+                detailsDiv.innerHTML = ''; // Limpa detalhes anteriores
+
+                yearResults.ages.forEach(ageResult => {
+                    const ageDiv = document.createElement('div');
+                    ageDiv.className = 'age-value';
+                    ageDiv.innerHTML = `Idade ${ageResult.age}: ${ageResult.planValue} (Mudança de faixa etária: ${ageResult.percentageChange.toFixed(2)}%)`;
+                    detailsDiv.appendChild(ageDiv);
+                });
+
+                // Rolagem suave para a nova seção de detalhes
+                detailsDiv.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function convertToDollar() {
+            const conversionRate = parseFloat(document.getElementById('conversion-rate').value) || 0;
+            const vumiResults = document.getElementById('vumi-results');
+            const redbridgeResults = document.getElementById('redbridge-results');
+
+            const vumiValue = parseFloat(vumiResults.innerText.replace('R$ ', '').replace('.', '').replace(',', '.')) || 0;
+            const redbridgeValue = parseFloat(redbridgeResults.innerText.replace('R$ ', '').replace('.', '').replace(',', '.')) || 0;
+
+            const vumiInDollar = (vumiValue / conversionRate).toFixed(2);
+            const redbridgeInDollar = (redbridgeValue / conversionRate).toFixed(2);
+
+            alert(`Vumi: $${vumiInDollar}\nRedBridge: $${redbridgeInDollar}`);
+        }
+    </script>
+</body>
+</html>
